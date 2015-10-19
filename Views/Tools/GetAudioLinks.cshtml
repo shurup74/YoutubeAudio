@@ -1,0 +1,21 @@
+﻿@{
+    ViewBag.Title = "GetAudioLinks";
+}
+
+<h2>GetAudioLinks</h2>
+
+<form id="form1" method="post">
+    <input type="text" id="yturl" name="yturl"/>
+    <input type="submit" id="btnsubmit" />
+
+    @if (ViewBag.links != null) {
+        int i = 1;
+        foreach (var link in ViewBag.links)
+        { 
+            @:@*<a href="@link">qwewqeqwe</a>*@
+            <br />
+            <audio controls><source src='@link'></audio>
+            i += 1;
+        }
+    }
+</form> 
