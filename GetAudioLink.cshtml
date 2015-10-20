@@ -1,0 +1,96 @@
+﻿@{
+    
+}
+
+<!DOCTYPE html>
+
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title></title>
+    </head>
+    <body>
+     @{
+        if (IsPost)
+        { 
+            string yturl = Request.Form["yturl"];; 
+            List<AudioLink> links = new List<AudioLink>();
+            //HttpWebRequest request = (HttpWebRequest)WebRequest.Create("https://www.youtube.com/watch?v=1ANSAh1Q_NE");
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(yturl);
+            CookieContainer cookieJar = new CookieContainer();
+
+            request.CookieContainer = cookieJar;
+
+            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+            int cookieCount = cookieJar.Count;
+
+            WebHeaderCollection header = response.Headers;
+
+            var encoding = System.Text.ASCIIEncoding.UTF8;
+            string responseText;
+            using (var reader = new System.IO.StreamReader(response.GetResponseStream(), encoding))
+            {
+                responseText = reader.ReadToEnd();
+            }
+            if (String.IsNullOrEmpty(responseText))
+            {
+                return;
+            }
+            var istart1 = responseText.IndexOf("\"title\":");
+            var substr1 = responseText.Substring(istart1 + 8);
+            var iend1 = substr1.IndexOf(",");
+            substr1 = substr1.Substring(0, iend1).Replace("\"","");
+            string linktitle = substr1;
+
+            var strarr = responseText.Split(new string[] { @"type=audio" }, StringSplitOptions.RemoveEmptyEntries);
+
+            for (int i = 1; i < strarr.Length; i++)
+            {
+                var al = new AudioLink();
+                var s = strarr[i];
+
+                var iend31 = s.IndexOf(",");
+                var iend32 = s.IndexOf(@"\u0026");
+                var type = "type=audio";
+                if (iend31 > iend32) {iend31 = iend32;}
+                type += HttpUtility.UrlDecode(s.Substring(0, iend31).Replace("\"", ""));
+                var iend2 = type.IndexOf(@"\u0026");
+                if (iend2 > 0){
+                    type = type.Substring(0, iend2);
+                }
+                al.LinkName = type;
+
+
+                var istart = s.IndexOf("url=");
+                var substr = s.Substring(istart + 4);
+                var iend = substr.IndexOf(@"\u0026");
+                if (iend < 0) {continue;}
+                substr = substr.Substring(0, iend);
+                var substrdecoded = HttpUtility.UrlDecode(substr);
+                al.LinkSource = substrdecoded;
+                //Console.WriteLine(substrdecoded);
+                links.Add(al);
+            }
+            <form method="post" action="">
+                Youtube link:
+                <input type="text" name="yturl" id="yturl" value="@yturl" style="width: 250px;">
+                <input type="submit" value="Submit" class="submit"><br>
+                <h2>@linktitle</h2><br>
+                 <audio controls>
+                    @foreach(var l in links){
+                        <source src="@l.LinkSource"/>
+                    }
+                </audio>                   
+            </form> 
+        }
+            else
+         {
+            <form method="post" action="">
+                Youtube link:
+                <input type="text" name="yturl" id="yturl" value="" style="width: 250px;">
+                <input type="submit" value="Submit" class="submit">
+            </form> 
+        }
+     } 
+    </body>
+</html>
